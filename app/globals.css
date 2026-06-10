@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════
+   SONIVAULT Design System — CSS Variables
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* Dark theme (default) */
+  --sv-bg: #0a0a0f;
+  --sv-surface: #13131a;
+  --sv-surface-hover: #1a1a24;
+  --sv-border: #1e1e2a;
+  --sv-border-light: #2a2a3a;
+  --sv-text-primary: #f0f0f5;
+  --sv-text-secondary: #b0b0bc;
+  --sv-text-muted: #6b6b7a;
+  --sv-accent: #4f6ef7;
+  --sv-accent-hover: #3d5be8;
+  --sv-accent-light: rgba(79, 110, 247, 0.12);
+  --sv-success: #22c55e;
+  --sv-warning: #f59e0b;
+  --sv-danger: #ef4444;
+  --sv-danger-hover: #dc2626;
+
+  /* Shadows */
+  --sv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sv-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --sv-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* Transitions */
+  --sv-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --sv-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Radii */
+  --sv-radius-sm: 6px;
+  --sv-radius-md: 8px;
+  --sv-radius-lg: 12px;
+  --sv-radius-xl: 16px;
+
+  /* Sidebar */
+  --sv-sidebar-width: 260px;
+  --sv-sidebar-collapsed-width: 72px;
+  --sv-header-height: 64px;
+}
+
+/* Light theme overrides */
+.light {
+  --sv-bg: #f5f5f7;
+  --sv-surface: #ffffff;
+  --sv-surface-hover: #f0f0f3;
+  --sv-border: #e2e2e8;
+  --sv-border-light: #d0d0d8;
+  --sv-text-primary: #1a1a2e;
+  --sv-text-secondary: #4a4a5c;
+  --sv-text-muted: #8b8b9a;
+  --sv-accent: #4f6ef7;
+  --sv-accent-hover: #3d5be8;
+  --sv-accent-light: rgba(79, 110, 247, 0.08);
+  --sv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --sv-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --sv-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ═══════════════════════════════════════════
+   Tailwind Theme Extension
+   ═══════════════════════════════════════════ */
+@theme inline {
+  --color-sv-bg: var(--sv-bg);
+  --color-sv-surface: var(--sv-surface);
+  --color-sv-surface-hover: var(--sv-surface-hover);
+  --color-sv-border: var(--sv-border);
+  --color-sv-border-light: var(--sv-border-light);
+  --color-sv-text-primary: var(--sv-text-primary);
+  --color-sv-text-secondary: var(--sv-text-secondary);
+  --color-sv-text-muted: var(--sv-text-muted);
+  --color-sv-accent: var(--sv-accent);
+  --color-sv-accent-hover: var(--sv-accent-hover);
+  --color-sv-accent-light: var(--sv-accent-light);
+  --color-sv-success: var(--sv-success);
+  --color-sv-warning: var(--sv-warning);
+  --color-sv-danger: var(--sv-danger);
+  --color-sv-danger-hover: var(--sv-danger-hover);
+  --font-sans: var(--font-inter);
+}
+
+/* ═══════════════════════════════════════════
+   Base Reset & Styles
+   ═══════════════════════════════════════════ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--sv-bg);
+  color: var(--sv-text-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════
+   Scrollbar Styles
+   ═══════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sv-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sv-text-muted);
+}
+
+/* ═══════════════════════════════════════════
+   Focus Styles
+   ═══════════════════════════════════════════ */
+
+*:focus-visible {
+  outline: 2px solid var(--sv-accent);
+  outline-offset: 2px;
+  border-radius: var(--sv-radius-sm);
+}
+
+/* ═══════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--sv-transition-slow) ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale var(--sv-transition) ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--sv-transition-slow) ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slideOutLeft var(--sv-transition-slow) ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--sv-surface) 25%,
+    var(--sv-surface-hover) 50%,
+    var(--sv-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ═══════════════════════════════════════════
+   Stagger Animation for Card Grids
+   ═══════════════════════════════════════════ */
+
+.stagger-item {
+  opacity: 0;
+  animation: fadeIn var(--sv-transition-slow) ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
