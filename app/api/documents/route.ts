@@ -66,7 +66,14 @@ export async function GET(request: NextRequest) {
 
     const documents = await Document.find(query).sort(sort).lean();
 
-    return NextResponse.json({ documents });
+    // Dynamically sign thumbnail URLs so they don't expire in the UI
+    const { buildThumbnailUrl } = await import('@/lib/cloudinary');
+    const documentsWithFreshThumbnails = documents.map(doc => ({
+      ...doc,
+      thumbnailUrl: buildThumbnailUrl(doc.cloudinaryPublicId, doc.mimeType) || doc.thumbnailUrl,
+    }));
+
+    return NextResponse.json({ documents: documentsWithFreshThumbnails });
   } catch (error) {
     console.error('List documents error:', error);
     return NextResponse.json(

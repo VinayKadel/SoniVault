@@ -95,7 +95,7 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
     } finally {
       setLoading(false);
     }
-  }, [sortBy, folderId]);
+  }, [sortBy, folderId, filter]);
 
   useEffect(() => {
     fetchData();

@@ -7,6 +7,7 @@ export interface IUser {
   createdAt: Date;
   lastLoginAt: Date;
   storageUsed: number;
+  password?: string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -21,6 +22,7 @@ const UserSchema = new Schema<IUser>(
     },
     lastLoginAt: { type: Date, default: Date.now },
     storageUsed: { type: Number, default: 0 },
+    password: { type: String },
   },
   { timestamps: true }
 );

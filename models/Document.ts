@@ -60,8 +60,6 @@ DocumentSchema.index({ name: 'text' });
 // Compound index for listing documents by owner + folder
 DocumentSchema.index({ ownerId: 1, folderId: 1, trashedAt: 1 });
 
-DocumentSchema.index({ name: 'text' });
-
 export const Document =
   models.Document || model<IDocument>('Document', DocumentSchema);
 

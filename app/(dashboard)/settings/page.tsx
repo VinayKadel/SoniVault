@@ -13,10 +13,17 @@ export default function SettingsPage() {
   const [storage, setStorage] = useState<{ totalBytes: number; usedBytes: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const TOTAL_STORAGE = 25 * 1024 * 1024 * 1024; // 25 GB
+
   useEffect(() => {
     fetch('/api/user/storage')
       .then(res => res.json())
-      .then(data => setStorage(data))
+      .then(data => {
+        setStorage({
+          totalBytes: data.totalBytes ?? TOTAL_STORAGE,
+          usedBytes: data.usedBytes ?? data.storageUsed ?? 0,
+        });
+      })
       .catch(() => toast.error('Failed to load storage info'))
       .finally(() => setLoading(false));
   }, []);

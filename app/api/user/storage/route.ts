@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ storageUsed: user.storageUsed || 0 });
+    const used = user.storageUsed || 0;
+    const total = 25 * 1024 * 1024 * 1024; // 25 GB
+
+    return NextResponse.json({ storageUsed: used, usedBytes: used, totalBytes: total });
   } catch (error) {
     console.error('Storage fetch error:', error);
     return NextResponse.json(

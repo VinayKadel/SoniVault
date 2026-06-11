@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -10,9 +11,9 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 'h-8 w-8 text-sm', text: 'text-base' },
-  md: { icon: 'h-10 w-10 text-base', text: 'text-lg' },
-  lg: { icon: 'h-14 w-14 text-xl', text: 'text-2xl' },
+  sm: { icon: 32, text: 'text-base' },
+  md: { icon: 40, text: 'text-lg' },
+  lg: { icon: 56, text: 'text-2xl' },
 };
 
 export function Logo({ size = 'md', showText = true, className }: LogoProps) {
@@ -20,16 +21,21 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
 
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      {/* Monogram icon */}
+      {/* Image Icon */}
       <div
         className={cn(
-          'flex items-center justify-center rounded-xl font-bold',
-          'bg-sv-accent text-white shadow-md',
-          'transition-transform duration-200 hover:scale-105',
-          styles.icon
+          'relative shrink-0 flex items-center justify-center rounded-xl overflow-hidden',
+          'transition-transform duration-200 hover:scale-105 shadow-sm bg-sv-surface border border-sv-border'
         )}
+        style={{ width: styles.icon, height: styles.icon }}
       >
-        SV
+        <Image
+          src="/icons/logo.png"
+          alt="SONIVAULT Logo"
+          fill
+          className="object-contain p-1"
+          priority
+        />
       </div>
 
       {/* Text */}

@@ -60,7 +60,7 @@ export function DropdownMenu({
           className={cn(
             'absolute top-full mt-1 z-50 min-w-[180px] py-1.5',
             'bg-sv-surface border border-sv-border rounded-lg shadow-lg',
-            'animate-fade-in-scale origin-top',
+            'animate-dropdown-in origin-top',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >

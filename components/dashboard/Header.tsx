@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 import {
@@ -15,16 +16,20 @@ import {
   LogOut,
   Settings,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import { DropdownMenu } from '@/components/ui/DropdownMenu';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { SearchBar } from './SearchBar';
+import toast from 'react-hot-toast';
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const { setMobileSidebarOpen } = useAppStore();
   const { data: session } = useSession();
+  const router = useRouter();
   const [mounted, setMounted] = React.useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -58,9 +63,36 @@ export function Header() {
         <div className="hidden md:block flex-1 max-w-xl ml-4">
           <SearchBar />
         </div>
+
+        {/* Mobile Search (expandable) */}
+        {mobileSearchOpen && (
+          <div className="absolute inset-x-0 top-0 h-[var(--sv-header-height)] bg-sv-bg/95 backdrop-blur-md z-50 flex items-center px-4 gap-2 md:hidden animate-fade-in">
+            <div className="flex-1">
+              <SearchBar />
+            </div>
+            <button
+              onClick={() => setMobileSearchOpen(false)}
+              className="p-2 rounded-lg text-sv-text-muted hover:text-sv-text-primary transition-colors cursor-pointer"
+              aria-label="Close search"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
+        {/* Mobile search trigger */}
+        <Tooltip content="Search">
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="p-2.5 rounded-lg text-sv-text-muted hover:text-sv-text-primary hover:bg-sv-surface-hover transition-colors md:hidden cursor-pointer"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+        </Tooltip>
+
         {/* Theme toggle */}
         {mounted && (
           <Tooltip content={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
@@ -81,6 +113,7 @@ export function Header() {
         {/* Notifications */}
         <Tooltip content="Notifications">
           <button
+            onClick={() => toast('No new notifications', { icon: '🔔' })}
             className="p-2.5 rounded-lg text-sv-text-muted hover:text-sv-text-primary hover:bg-sv-surface-hover transition-colors relative cursor-pointer"
             aria-label="Notifications"
           >
@@ -121,7 +154,7 @@ export function Header() {
             {
               label: 'Settings',
               icon: <Settings className="h-4 w-4" />,
-              onClick: () => {},
+              onClick: () => router.push('/settings'),
             },
             'separator',
             {

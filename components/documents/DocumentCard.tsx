@@ -69,6 +69,7 @@ export function DocumentCard({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameName, setRenameName] = useState(doc.name);
   const [isCached, setIsCached] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     isDocumentCached(String(doc._id)).then(setIsCached);
@@ -205,23 +206,26 @@ export function DocumentCard({
 
   // Grid view
   return (
-    <div className={cn(
-      'group relative bg-sv-surface border border-sv-border rounded-xl overflow-hidden',
-      'hover:border-sv-border-light hover:shadow-lg hover:-translate-y-0.5',
-      'transition-all duration-200 stagger-item cursor-pointer'
-    )}>
+    <div
+      className={cn(
+        'group relative bg-sv-surface border border-sv-border rounded-xl overflow-hidden',
+        'hover:border-sv-border-light hover:shadow-lg hover:-translate-y-0.5',
+        'transition-all duration-200 stagger-item cursor-pointer'
+      )}
+      onClick={() => onOpen?.(doc)}
+    >
       {/* Thumbnail area */}
       <div 
         className="relative h-32 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors"
-        onClick={() => onOpen?.(doc)}
       >
-        {doc.thumbnailUrl ? (
+        {doc.thumbnailUrl && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={doc.thumbnailUrl}
             alt={doc.name}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={() => setImageError(true)}
           />
         ) : (
           <DocIcon mimeType={doc.mimeType} className="h-14 w-14 text-sv-border" />

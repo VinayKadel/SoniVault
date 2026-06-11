@@ -2,15 +2,18 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import { Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,34 +21,35 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch('/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), name: name.trim() }),
+      const res = await signIn('credentials', {
+        redirect: false,
+        email: email.trim(),
+        password: password.trim(),
       });
 
-      const data = await res.json();
-
-      if (!data.success) {
-        setError(data.error || 'Failed to send OTP. Please try again.');
+      if (res?.error) {
+        setError(res.error);
+        if (res.error.includes('Forgot Password')) {
+           // We could redirect to forgot password, but showing the message is fine
+           toast.error(res.error);
+        }
         return;
       }
 
-      // Redirect to verify page
-      router.push(`/verify-otp?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
-    } catch {
-      setError('Network error. Please check your connection and try again.');
+      if (res?.ok) {
+        toast.success('Successfully logged in!');
+        router.push('/');
+        router.refresh();
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -66,37 +70,12 @@ export default function LoginPage() {
             Sign in to SONIVAULT
           </h1>
           <p className="text-sm text-sv-text-muted">
-            Enter your email and we'll send you a verification code.
+            Enter your email and password to access your vault.
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name (optional) */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="login-name"
-              className="block text-sm font-medium text-sv-text-secondary"
-            >
-              Your name <span className="text-sv-text-muted font-normal">(optional, for first-time users)</span>
-            </label>
-            <input
-              id="login-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Alex"
-              autoComplete="name"
-              className={cn(
-                'w-full h-11 px-4 rounded-lg text-sm',
-                'bg-sv-bg border border-sv-border',
-                'text-sv-text-primary placeholder:text-sv-text-muted',
-                'focus:outline-none focus:ring-2 focus:ring-sv-accent/50 focus:border-sv-accent',
-                'transition-all duration-150'
-              )}
-            />
-          </div>
-
           {/* Email */}
           <div className="space-y-1.5">
             <label
@@ -128,6 +107,45 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Password */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="login-password"
+                className="block text-sm font-medium text-sv-text-secondary"
+              >
+                Password
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-sv-accent hover:text-sv-accent-light transition-colors"
+                tabIndex={-1}
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sv-text-muted pointer-events-none" />
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+                className={cn(
+                  'w-full h-11 pl-11 pr-4 rounded-lg text-sm',
+                  'bg-sv-bg border border-sv-border',
+                  'text-sv-text-primary placeholder:text-sv-text-muted',
+                  'focus:outline-none focus:ring-2 focus:ring-sv-accent/50 focus:border-sv-accent',
+                  'transition-all duration-150',
+                  error && 'border-sv-danger focus:ring-sv-danger/50 focus:border-sv-danger'
+                )}
+              />
+            </div>
+          </div>
+
           {/* Error */}
           {error && (
             <div className="flex items-start gap-2.5 p-3 rounded-lg bg-sv-danger/10 border border-sv-danger/20">
@@ -143,13 +161,16 @@ export default function LoginPage() {
             className="w-full"
             icon={!loading ? <ArrowRight className="h-4 w-4" /> : undefined}
           >
-            {loading ? 'Sending code…' : 'Send verification code'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>
 
         {/* Footer note */}
-        <p className="text-xs text-sv-text-muted text-center leading-relaxed">
-          No password required. We'll send a 6-digit code to your email.
+        <p className="text-sm text-sv-text-muted text-center">
+          Don't have an account?{' '}
+          <Link href="/register" className="text-sv-accent hover:text-sv-accent-light font-medium transition-colors">
+            Sign up
+          </Link>
         </p>
       </div>
     </div>

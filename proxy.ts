@@ -12,7 +12,8 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage =
     nextUrl.pathname.startsWith('/login') ||
-    nextUrl.pathname.startsWith('/verify-otp');
+    nextUrl.pathname.startsWith('/register') ||
+    nextUrl.pathname.startsWith('/forgot-password');
 
   const isPublicApi =
     nextUrl.pathname.startsWith('/api/auth') ||

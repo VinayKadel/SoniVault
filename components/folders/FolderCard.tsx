@@ -145,7 +145,7 @@ export function FolderCard({
     )}>
       {/* Thumbnail area (just a big icon for folders) */}
       <Link href={`/folder/${folder._id}`}>
-        <div className="relative h-28 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors">
+        <div className="relative h-32 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors">
           <Folder className="h-16 w-16 text-sv-warning fill-sv-warning/20 transition-transform group-hover:scale-105" />
         </div>
       </Link>

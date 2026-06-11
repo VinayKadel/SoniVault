@@ -55,7 +55,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-modal-backdrop"
         onClick={onClose}
         aria-hidden
       />
@@ -67,7 +67,7 @@ export function Modal({
         aria-label={title}
         className={cn(
           'relative w-full bg-sv-surface border border-sv-border rounded-xl shadow-2xl',
-          'animate-fade-in-scale',
+          'animate-modal-content',
           sizeStyles[size],
           className
         )}

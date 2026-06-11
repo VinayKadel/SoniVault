@@ -8,24 +8,33 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const email = String(body.email || '').toLowerCase().trim();
+    const password = String(body.password || '');
     const code = String(body.code || '').trim();
-    const name = String(body.name || email.split('@')[0]).trim();
 
-    if (!email || !code) {
+    if (!email || !password || !code) {
       return NextResponse.json(
-        { success: false, error: 'Email and code are required' },
+        { success: false, error: 'Email, password, and code are required' },
         { status: 400 }
       );
     }
 
-    if (!/^\d{6}$/.test(code)) {
+    if (password.length < 6) {
       return NextResponse.json(
-        { success: false, error: 'Code must be 6 digits' },
+        { success: false, error: 'Password must be at least 6 characters long' },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'No account found with this email address.' },
+        { status: 400 }
+      );
+    }
 
     // Find the latest unused, unexpired OTP for this email
     const otp = await OTP.findOne({
@@ -44,7 +53,6 @@ export async function POST(request: NextRequest) {
     // Increment attempts first
     otp.attempts += 1;
 
-    // Too many attempts — invalidate OTP
     if (otp.attempts >= 3) {
       otp.used = true;
       await otp.save();
@@ -58,7 +66,7 @@ export async function POST(request: NextRequest) {
     const isValid = await bcrypt.compare(code, otp.code);
 
     if (!isValid) {
-      await otp.save(); // save incremented attempts
+      await otp.save();
       const remaining = 2 - otp.attempts;
       return NextResponse.json(
         {
@@ -69,14 +77,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Valid — we don't mark as used yet because the actual registration or reset endpoint will consume it.
-    await otp.save(); // Save incremented attempts
+    // Valid — mark as used
+    otp.used = true;
+    await otp.save();
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user
+    user.password = hashedPassword;
+    await user.save();
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('OTP verify error:', error);
+    console.error('Password reset error:', error);
     return NextResponse.json(
-      { success: false, error: 'Verification failed. Please try again.' },
+      { success: false, error: 'Password reset failed. Please try again.' },
       { status: 500 }
     );
   }
