@@ -18,7 +18,8 @@ export async function proxy(request: NextRequest) {
   const isPublicApi =
     nextUrl.pathname.startsWith('/api/auth') ||
     nextUrl.pathname.startsWith('/api/otp') ||
-    nextUrl.pathname.startsWith('/api/share');
+    nextUrl.pathname.startsWith('/api/share') ||
+    nextUrl.pathname.startsWith('/api/cron');
 
   const isPublicPage = nextUrl.pathname.startsWith('/share');
 
