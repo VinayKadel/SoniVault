@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
@@ -28,6 +29,9 @@ export default function DashboardLayout({
           'flex flex-col flex-1 min-w-0 transition-all duration-300'
         )}
       >
+        {/* Offline indicator — shown when network is lost */}
+        <OfflineBanner />
+
         {/* Header */}
         <Header />
 

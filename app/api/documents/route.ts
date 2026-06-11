@@ -34,6 +34,9 @@ export async function GET(request: NextRequest) {
       query.trashedAt = null;
       if (filter === 'starred') {
         query.starred = true;
+      } else if (filter === 'recent') {
+        // Recent = documents that have been opened/accessed, sorted by last access time
+        query.lastAccessedAt = { $ne: null };
       }
     }
 
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest) {
       query.fileType = fileType;
     }
 
-    // Sort
+    // Sort — for Recent, always sort by lastAccessedAt desc regardless of sortBy param
     const sortMap: Record<string, Record<string, 1 | -1>> = {
       createdAt_desc: { createdAt: -1 },
       createdAt_asc: { createdAt: 1 },
@@ -62,9 +65,12 @@ export async function GET(request: NextRequest) {
       size_desc: { size: -1 },
       size_asc: { size: 1 },
     };
-    const sort = sortMap[sortBy] || { createdAt: -1 };
+    const sort: Record<string, 1 | -1> = filter === 'recent'
+      ? { lastAccessedAt: -1 }
+      : (sortMap[sortBy] || { createdAt: -1 });
 
-    const documents = await Document.find(query).sort(sort).lean();
+    const limit = filter === 'recent' ? 20 : 0; // 0 = no limit in Mongoose
+    const documents = await Document.find(query).sort(sort).limit(limit).lean();
 
     // Dynamically sign thumbnail URLs so they don't expire in the UI
     const { buildThumbnailUrl } = await import('@/lib/cloudinary');

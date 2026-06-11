@@ -41,6 +41,9 @@ export async function GET(request: NextRequest, { params }: Params) {
     // Generate a signed download URL (1 hour)
     const downloadUrl = generateSignedDownloadUrl(doc.cloudinaryPublicId, 3600);
 
+    // Stamp lastAccessedAt asynchronously (don't block response)
+    Document.findByIdAndUpdate(doc._id, { lastAccessedAt: new Date() }).exec().catch(console.error);
+
     return NextResponse.json({ document: doc, downloadUrl });
   } catch (error) {
     console.error('Get document error:', error);

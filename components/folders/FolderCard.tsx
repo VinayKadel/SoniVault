@@ -23,6 +23,9 @@ interface FolderCardProps {
   onMove?: (id: string) => void;
   onCopy?: (id: string) => void;
   onRestore?: (id: string) => void;
+  selected?: boolean;
+  onSelect?: (id: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
 export function FolderCard({
@@ -34,6 +37,9 @@ export function FolderCard({
   onMove,
   onCopy,
   onRestore,
+  selected = false,
+  onSelect,
+  selectionMode = false,
 }: FolderCardProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameName, setRenameName] = useState(folder.name);
@@ -92,8 +98,21 @@ export function FolderCard({
         'group flex items-center gap-4 px-4 py-3',
         'bg-sv-surface border border-sv-border rounded-xl',
         'hover:border-sv-border-light hover:bg-sv-surface-hover',
-        'transition-all duration-150 stagger-item'
+        'transition-all duration-150 stagger-item',
+        selected && 'border-sv-accent bg-sv-accent/5 ring-1 ring-sv-accent'
       )}>
+        {/* Checkbox */}
+        {(selectionMode || selected) && (
+          <div className="shrink-0 flex items-center pr-2">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => onSelect?.(String(folder._id), e.target.checked)}
+              className="h-4 w-4 rounded border-sv-border text-sv-accent focus:ring-sv-accent bg-sv-bg cursor-pointer"
+            />
+          </div>
+        )}
+
         {/* Icon */}
         <div className="h-10 w-10 rounded-lg bg-sv-warning/10 border border-sv-warning/20 flex items-center justify-center shrink-0">
           <Folder className="h-5 w-5 text-sv-warning fill-sv-warning/20" />
@@ -138,17 +157,44 @@ export function FolderCard({
 
   // Grid view
   return (
-    <div className={cn(
-      'group relative bg-sv-surface border border-sv-border rounded-xl overflow-hidden',
-      'hover:border-sv-border-light hover:shadow-lg hover:-translate-y-0.5',
-      'transition-all duration-200 stagger-item'
-    )}>
-      {/* Thumbnail area (just a big icon for folders) */}
-      <Link href={`/folder/${folder._id}`}>
-        <div className="relative h-32 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors">
-          <Folder className="h-16 w-16 text-sv-warning fill-sv-warning/20 transition-transform group-hover:scale-105" />
+    <div
+      className={cn(
+        'group relative bg-sv-surface border border-sv-border rounded-xl overflow-hidden',
+        'hover:border-sv-border-light hover:shadow-lg hover:-translate-y-0.5',
+        'transition-all duration-200 stagger-item',
+        selected && 'border-sv-accent ring-1 ring-sv-accent'
+      )}
+    >
+      {/* Checkbox Overlay (Grid) */}
+      {(selectionMode || selected) && (
+        <div 
+          className="absolute top-2 left-2 z-20"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onSelect?.(String(folder._id), e.target.checked)}
+            className="h-4 w-4 rounded border-sv-border text-sv-accent focus:ring-sv-accent bg-sv-bg cursor-pointer shadow-sm"
+          />
         </div>
-      </Link>
+      )}
+
+      {/* Thumbnail area (just a big icon for folders) */}
+      <div 
+        onClick={(e) => {
+          if (selectionMode) {
+            e.preventDefault();
+            onSelect?.(String(folder._id), !selected);
+          }
+        }}
+      >
+        <Link href={`/folder/${folder._id}`}>
+          <div className="relative h-32 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors">
+            <Folder className="h-16 w-16 text-sv-warning fill-sv-warning/20 transition-transform group-hover:scale-105" />
+          </div>
+        </Link>
+      </div>
 
       {/* Card body */}
       <div className="p-3 space-y-2">

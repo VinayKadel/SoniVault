@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -18,6 +18,9 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -96,6 +99,11 @@ export default function RegisterPage() {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match. Please try again.');
       return;
     }
 
@@ -276,6 +284,7 @@ export default function RegisterPage() {
 
         {step === 3 && (
           <form onSubmit={handleSetPassword} className="space-y-4 animate-fade-in">
+            {/* Password */}
             <div className="space-y-1.5">
               <label htmlFor="register-password" className="block text-sm font-medium text-sv-text-secondary">
                 Set Password
@@ -284,7 +293,7 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sv-text-muted pointer-events-none" />
                 <input
                   id="register-password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
@@ -292,13 +301,73 @@ export default function RegisterPage() {
                   minLength={6}
                   autoFocus
                   className={cn(
-                    'w-full h-11 pl-11 pr-4 rounded-lg text-sm bg-sv-bg border border-sv-border',
+                    'w-full h-11 pl-11 pr-11 rounded-lg text-sm bg-sv-bg border border-sv-border',
                     'text-sv-text-primary placeholder:text-sv-text-muted',
                     'focus:outline-none focus:ring-2 focus:ring-sv-accent/50 focus:border-sv-accent',
-                    'transition-all duration-150'
+                    'transition-all duration-150',
+                    error && 'border-sv-danger focus:ring-sv-danger/50 focus:border-sv-danger'
                   )}
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sv-text-muted hover:text-sv-text-primary transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-sv-text-secondary">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-sv-text-muted pointer-events-none" />
+                <input
+                  id="register-confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
+                  required
+                  className={cn(
+                    'w-full h-11 pl-11 pr-11 rounded-lg text-sm bg-sv-bg border border-sv-border',
+                    'text-sv-text-primary placeholder:text-sv-text-muted',
+                    'focus:outline-none focus:ring-2 focus:ring-sv-accent/50 focus:border-sv-accent',
+                    'transition-all duration-150',
+                    confirmPassword && password !== confirmPassword
+                      ? 'border-sv-danger focus:ring-sv-danger/50 focus:border-sv-danger'
+                      : confirmPassword && password === confirmPassword
+                      ? 'border-green-500 focus:ring-green-500/50 focus:border-green-500'
+                      : ''
+                  )}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sv-text-muted hover:text-sv-text-primary transition-colors"
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="flex items-center gap-1.5 text-xs text-sv-danger mt-1">
+                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  Passwords do not match.
+                </p>
+              )}
+              {confirmPassword && password === confirmPassword && (
+                <p className="flex items-center gap-1.5 text-xs text-green-500 mt-1">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  Passwords match!
+                </p>
+              )}
             </div>
 
             {error && (

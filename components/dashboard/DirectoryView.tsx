@@ -69,7 +69,74 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [docToShare, setDocToShare] = useState<{ id: string; name: string } | null>(null);
 
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selectionMode = selectedIds.size > 0;
+
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Selection Handlers
+  const toggleSelection = (id: string, isSelected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (isSelected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === documents.length + folders.length) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set([
+        ...folders.map(f => String(f._id)),
+        ...documents.map(d => String(d._id))
+      ]);
+      setSelectedIds(allIds);
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Bulk Action Handlers
+  const handleBulkAction = async (actionType: 'trash' | 'restore' | 'delete' | 'star') => {
+    if (selectedIds.size === 0) return;
+    
+    // Separate into folders and documents based on the known lists
+    const folderIds = folders.filter(f => selectedIds.has(String(f._id))).map(f => String(f._id));
+    const docIds = documents.filter(d => selectedIds.has(String(d._id))).map(d => String(d._id));
+
+    toast.loading(`Processing ${selectedIds.size} items…`, { id: 'bulk' });
+
+    try {
+      const promises: Promise<any>[] = [];
+
+      if (actionType === 'trash') {
+        const payload = JSON.stringify({ trashedAt: new Date().toISOString() });
+        folderIds.forEach(id => promises.push(fetch(`/api/folders/${id}`, { method: 'PATCH', body: payload, headers: { 'Content-Type': 'application/json' } })));
+        docIds.forEach(id => promises.push(fetch(`/api/documents/${id}`, { method: 'PATCH', body: payload, headers: { 'Content-Type': 'application/json' } })));
+      } else if (actionType === 'restore') {
+        const payload = JSON.stringify({ trashedAt: null });
+        folderIds.forEach(id => promises.push(fetch(`/api/folders/${id}`, { method: 'PATCH', body: payload, headers: { 'Content-Type': 'application/json' } })));
+        docIds.forEach(id => promises.push(fetch(`/api/documents/${id}`, { method: 'PATCH', body: payload, headers: { 'Content-Type': 'application/json' } })));
+      } else if (actionType === 'delete') {
+        folderIds.forEach(id => promises.push(fetch(`/api/folders/${id}`, { method: 'DELETE' })));
+        docIds.forEach(id => promises.push(fetch(`/api/documents/${id}`, { method: 'DELETE' })));
+      } else if (actionType === 'star') {
+        // Star only applies to documents currently
+        const payload = JSON.stringify({ starred: true });
+        docIds.forEach(id => promises.push(fetch(`/api/documents/${id}`, { method: 'PATCH', body: payload, headers: { 'Content-Type': 'application/json' } })));
+      }
+
+      await Promise.allSettled(promises);
+      toast.success(`Action completed`, { id: 'bulk' });
+      clearSelection();
+      setRefreshKey(k => k + 1);
+    } catch {
+      toast.error('Failed to process some items', { id: 'bulk' });
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -99,6 +166,8 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
 
   useEffect(() => {
     fetchData();
+    // Clear selection when navigating/filtering
+    clearSelection();
   }, [fetchData, refreshKey]);
 
   // Document Handlers
@@ -157,6 +226,22 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     }).catch(() => {});
+  };
+
+  const handleDocCopy = async (id: string) => {
+    try {
+      toast.loading('Copying document…', { id: 'copy-doc' });
+      const res = await fetch(`/api/documents/${id}/copy`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Document copied', { id: 'copy-doc' });
+        setRefreshKey((k) => k + 1);
+      } else {
+        toast.error(data.error || 'Failed to copy', { id: 'copy-doc' });
+      }
+    } catch {
+      toast.error('Failed to copy document', { id: 'copy-doc' });
+    }
   };
 
   // Folder Handlers
@@ -249,6 +334,22 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
     }
   };
 
+  const handleFolderCopy = async (id: string) => {
+    try {
+      toast.loading('Copying folder…', { id: 'copy-folder' });
+      const res = await fetch(`/api/folders/${id}/copy`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Folder copied', { id: 'copy-folder' });
+        setRefreshKey((k) => k + 1);
+      } else {
+        toast.error(data.error || 'Failed to copy folder', { id: 'copy-folder' });
+      }
+    } catch {
+      toast.error('Failed to copy folder', { id: 'copy-folder' });
+    }
+  };
+
   const executeMove = async (destinationFolderId: string | null) => {
     if (!itemToMove) return;
     
@@ -325,6 +426,50 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
           </div>
         )}
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectionMode && (
+        <div className="flex items-center justify-between px-4 py-2 bg-sv-accent/10 border border-sv-accent/20 rounded-xl animate-fade-in mb-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === itemCount}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-sv-border text-sv-accent focus:ring-sv-accent bg-sv-bg cursor-pointer"
+            />
+            <span className="text-sm font-medium text-sv-text-primary">
+              {selectedIds.size} selected
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {filter !== 'trash' ? (
+              <>
+                <Button variant="ghost" size="sm" icon={<Star className="h-4 w-4" />} onClick={() => handleBulkAction('star')}>
+                  <span className="hidden sm:inline">Star</span>
+                </Button>
+                {/* For move, we just use a basic text button for now; full UI would need a folder picker modal that works with an array of IDs */}
+                <Button variant="ghost" size="sm" icon={<TrashIcon className="h-4 w-4 text-sv-danger" />} onClick={() => handleBulkAction('trash')} className="hover:bg-sv-danger/10 text-sv-danger">
+                  <span className="hidden sm:inline">Trash</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => handleBulkAction('restore')}>
+                  Restore
+                </Button>
+                <Button variant="danger" size="sm" icon={<TrashIcon className="h-4 w-4" />} onClick={() => handleBulkAction('delete')}>
+                  <span className="hidden sm:inline">Delete Permanently</span>
+                </Button>
+              </>
+            )}
+            <div className="w-px h-4 bg-sv-border mx-1" />
+            <Button variant="ghost" size="sm" onClick={clearSelection}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -431,6 +576,10 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
               onMove={filter !== 'trash' ? (id) => openMoveModal(id, 'folder') : undefined}
               onRestore={filter === 'trash' ? () => handleFolderRestore(String(folder._id)) : undefined}
               onDelete={filter === 'trash' ? () => handleFolderDelete(String(folder._id)) : undefined}
+              onCopy={filter !== 'trash' ? handleFolderCopy : undefined}
+              selected={selectedIds.has(String(folder._id))}
+              onSelect={toggleSelection}
+              selectionMode={selectionMode}
             />
           ))}
           {documents.map((doc) => (
@@ -447,6 +596,10 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
               onRename={filter !== 'trash' ? handleDocRename : undefined}
               onMove={filter !== 'trash' ? (id) => openMoveModal(id, 'document') : undefined}
               onShare={filter !== 'trash' ? (id) => openShareModal(id, doc.name) : undefined}
+              onCopy={filter !== 'trash' ? handleDocCopy : undefined}
+              selected={selectedIds.has(String(doc._id))}
+              onSelect={toggleSelection}
+              selectionMode={selectionMode}
             />
           ))}
         </div>
@@ -490,7 +643,12 @@ export function DirectoryView({ folderId, filter = 'all' }: DirectoryViewProps) 
       {/* Viewer Modal */}
       <DocumentViewer
         document={viewingDoc}
+        allDocuments={documents}
         onClose={() => setViewingDoc(null)}
+        onShare={(id, name) => {
+          setViewingDoc(null);
+          setTimeout(() => openShareModal(id, name), 150);
+        }}
       />
 
       {/* Share Modal */}

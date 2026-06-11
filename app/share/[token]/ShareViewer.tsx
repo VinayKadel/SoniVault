@@ -12,17 +12,17 @@ export function ShareViewer({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [viewTimestamp] = useState(() => new Date().toLocaleString());
+
   useEffect(() => {
-    // Prevent right click for screenshot deterrence
+    // Prevent right-click context menu on view-only links as deterrence
     const handleContextMenu = (e: MouseEvent) => {
-      if (data?.permission === 'view') {
-        e.preventDefault();
-      }
+      // Block context menu always on this page (it's a shared document viewer)
+      e.preventDefault();
     };
-    
     document.addEventListener('contextmenu', handleContextMenu);
     return () => document.removeEventListener('contextmenu', handleContextMenu);
-  }, [data?.permission]);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/share/${token}`)
@@ -90,16 +90,23 @@ export function ShareViewer({ token }: { token: string }) {
         className="flex-1 bg-sv-bg border-x border-b border-sv-border rounded-b-xl relative overflow-hidden flex items-center justify-center"
         style={permission === 'view' ? { userSelect: 'none', WebkitUserSelect: 'none' } : {}}
       >
-        {/* Anti-screenshot Watermark Layer for View-Only */}
+        {/* Anti-screenshot Watermark Layer for View-Only — repeating diagonal text grid */}
         {permission === 'view' && (
-          <div 
-            className="pointer-events-none absolute inset-0 z-10 opacity-[0.03] rotate-[-20deg] scale-150"
-            style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'300\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ctext x=\'50%25\' y=\'50%25\' font-size=\'24\' font-family=\'sans-serif\' font-weight=\'bold\' fill=\'%23ffffff\' text-anchor=\'middle\' dominant-baseline=\'middle\' transform=\'rotate(-15, 150, 100)\'%3ESONIVAULT%3C/text%3E%3C/svg%3E")',
-              backgroundRepeat: 'repeat',
-            }}
+          <div
+            className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
             aria-hidden="true"
-          />
+            style={{ userSelect: 'none' }}
+          >
+            {/* Repeating grid of watermark text */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='160'><text x='50%' y='45%' font-size='13' font-family='system-ui,sans-serif' font-weight='600' fill='%23ffffff' fill-opacity='0.07' text-anchor='middle' dominant-baseline='middle' transform='rotate(-25, 160, 80)'>SONIVAULT · View Only</text><text x='50%' y='75%' font-size='9' font-family='system-ui,sans-serif' fill='%23ffffff' fill-opacity='0.05' text-anchor='middle' dominant-baseline='middle' transform='rotate(-25, 160, 80)'>${viewTimestamp}</text></svg>`)}")`,
+                backgroundRepeat: 'repeat',
+                backgroundSize: '320px 160px',
+              }}
+            />
+          </div>
         )}
 
         {/* Content Streamer */}

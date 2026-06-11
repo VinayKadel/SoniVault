@@ -29,24 +29,62 @@ export default function SettingsPage() {
   }, []);
 
   const handleDeleteAll = async () => {
-    if (!window.confirm('Are you absolutely sure you want to permanently delete all your documents? This cannot be undone.')) {
+    if (!window.confirm('Are you absolutely sure you want to permanently delete ALL your documents? This cannot be undone.')) {
+      return;
+    }
+    // Double-confirm for destructive action
+    if (!window.confirm('Last warning: this will permanently delete everything from Cloudinary and MongoDB. Continue?')) {
       return;
     }
 
     try {
-      toast.loading('Deleting documents...', { id: 'delete' });
-      // We would normally have a specific API route for this, like DELETE /api/user/documents/all
-      // For now, this is a placeholder action
-      setTimeout(() => {
-        toast.success('All documents deleted (Simulation)', { id: 'delete' });
-      }, 1500);
-    } catch (e) {
-      toast.error('Failed to delete documents', { id: 'delete' });
+      toast.loading('Deleting all documents...', { id: 'delete-all' });
+      const res = await fetch('/api/user/documents', { method: 'DELETE' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Delete failed');
+      }
+
+      toast.success(`Deleted ${data.deleted} document${data.deleted !== 1 ? 's' : ''} successfully.`, { id: 'delete-all' });
+      // Refresh storage display
+      setStorage({ totalBytes: TOTAL_STORAGE, usedBytes: 0 });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete documents';
+      toast.error(msg, { id: 'delete-all' });
     }
   };
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/login' });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you ABSOLUTELY sure? This will permanently delete your account, all your documents, and all your data. This CANNOT be undone.')) {
+      return;
+    }
+    const confirmation = window.prompt('Type your email address to confirm account deletion:');
+    if (confirmation?.toLowerCase() !== session?.user?.email?.toLowerCase()) {
+      toast.error('Email did not match. Account deletion cancelled.');
+      return;
+    }
+
+    try {
+      toast.loading('Deleting account...', { id: 'delete-account' });
+      const res = await fetch('/api/user/account', { method: 'DELETE' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Delete failed');
+      }
+
+      toast.success('Account deleted. Signing out...', { id: 'delete-account' });
+      // Give the toast a moment to show, then sign out
+      setTimeout(() => signOut({ callbackUrl: '/login' }), 1500);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete account';
+      toast.error(msg, { id: 'delete-account' });
+    }
   };
 
   return (
@@ -137,7 +175,7 @@ export default function SettingsPage() {
                 <h3 className="text-sm font-medium text-sv-text-primary">Delete account</h3>
                 <p className="text-xs text-sv-text-muted mt-0.5">Permanently delete your account and all associated data.</p>
               </div>
-              <Button variant="danger" size="sm" disabled>Delete Account</Button>
+              <Button variant="danger" size="sm" onClick={handleDeleteAccount}>Delete Account</Button>
             </div>
           </div>
         </section>

@@ -17,6 +17,7 @@ export interface IDocument {
   starred: boolean;
   trashedAt: Date | null;
   offlineCachedAt: Date | null;
+  lastAccessedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +51,7 @@ const DocumentSchema = new Schema<IDocument>(
     starred: { type: Boolean, default: false },
     trashedAt: { type: Date, default: null },
     offlineCachedAt: { type: Date, default: null },
+    lastAccessedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -16,6 +16,7 @@ import {
   Pencil,
   ArrowRight,
   MoreHorizontal,
+  Copy,
 } from 'lucide-react';
 import { isDocumentCached } from '@/lib/offlineDB';
 import { OfflineBadge } from '@/components/ui/OfflineBadge';
@@ -32,7 +33,11 @@ interface DocumentCardProps {
   onRename?: (id: string, name: string) => void;
   onTrash?: (id: string) => void;
   onMove?: (id: string) => void;
+  onCopy?: (id: string) => void;
   onRestore?: (id: string) => void;
+  selected?: boolean;
+  onSelect?: (id: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
 function DocIcon({ mimeType, className }: { mimeType: string; className?: string }) {
@@ -64,7 +69,11 @@ export function DocumentCard({
   onRename,
   onTrash,
   onMove,
+  onCopy,
   onRestore,
+  selected = false,
+  onSelect,
+  selectionMode = false,
 }: DocumentCardProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameName, setRenameName] = useState(doc.name);
@@ -97,6 +106,11 @@ export function DocumentCard({
       label: 'Rename',
       icon: <Pencil className="h-4 w-4" />,
       onClick: () => { setIsRenaming(true); setRenameName(doc.name); },
+    }] : []),
+    ...(onCopy ? [{
+      label: 'Make a copy',
+      icon: <Copy className="h-4 w-4" />,
+      onClick: () => onCopy(String(doc._id)),
     }] : []),
     ...(onMove ? [{
       label: 'Move',
@@ -134,8 +148,21 @@ export function DocumentCard({
         'group flex items-center gap-4 px-4 py-3',
         'bg-sv-surface border border-sv-border rounded-xl',
         'hover:border-sv-border-light hover:bg-sv-surface-hover',
-        'transition-all duration-150 stagger-item'
+        'transition-all duration-150 stagger-item',
+        selected && 'border-sv-accent bg-sv-accent/5 ring-1 ring-sv-accent'
       )}>
+        {/* Checkbox */}
+        {(selectionMode || selected) && (
+          <div className="shrink-0 flex items-center pr-2">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => onSelect?.(String(doc._id), e.target.checked)}
+              className="h-4 w-4 rounded border-sv-border text-sv-accent focus:ring-sv-accent bg-sv-bg cursor-pointer"
+            />
+          </div>
+        )}
+
         {/* Icon */}
         <div className="h-10 w-10 rounded-lg bg-sv-bg border border-sv-border flex items-center justify-center shrink-0">
           <DocIcon mimeType={doc.mimeType} className="h-5 w-5 text-sv-text-muted" />
@@ -210,10 +237,32 @@ export function DocumentCard({
       className={cn(
         'group relative bg-sv-surface border border-sv-border rounded-xl overflow-hidden',
         'hover:border-sv-border-light hover:shadow-lg hover:-translate-y-0.5',
-        'transition-all duration-200 stagger-item cursor-pointer'
+        'transition-all duration-200 stagger-item cursor-pointer',
+        selected && 'border-sv-accent ring-1 ring-sv-accent'
       )}
-      onClick={() => onOpen?.(doc)}
+      onClick={() => {
+        if (selectionMode) {
+          onSelect?.(String(doc._id), !selected);
+        } else {
+          onOpen?.(doc);
+        }
+      }}
     >
+      {/* Checkbox Overlay (Grid) */}
+      {(selectionMode || selected) && (
+        <div 
+          className="absolute top-2 left-2 z-20"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onSelect?.(String(doc._id), e.target.checked)}
+            className="h-4 w-4 rounded border-sv-border text-sv-accent focus:ring-sv-accent bg-sv-bg cursor-pointer shadow-sm"
+          />
+        </div>
+      )}
+
       {/* Thumbnail area */}
       <div 
         className="relative h-32 bg-sv-bg border-b border-sv-border flex items-center justify-center overflow-hidden cursor-pointer group-hover:bg-sv-surface transition-colors"
